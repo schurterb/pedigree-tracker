@@ -1,0 +1,126 @@
+"""
+Animal Type API resource for managing animal types.
+"""
+from flask import request
+from flask_restx import Namespace, Resource, fields
+from sqlalchemy.exc import IntegrityError
+
+from ..models import AnimalType, Animal
+from ..database import get_db
+
+# Create namespace
+ns = Namespace('animal-types', description='Animal type operations')
+
+# Request/response models
+animal_type_model = ns.model('AnimalType', {
+    'id': fields.Integer(readOnly=True, description='The animal type unique identifier'),
+    'name': fields.String(required=True, description='The animal type name'),
+    'description': fields.String(description='Description of the animal type'),
+    'created_at': fields.DateTime(readOnly=True, description='Creation timestamp'),
+    'updated_at': fields.DateTime(readOnly=True, description='Last update timestamp')
+})
+
+@ns.route('/')
+class AnimalTypeList(Resource):
+    """Shows a list of all animal types, and lets you POST to add new types."""
+    
+    @ns.doc('list_animal_types')
+    @ns.marshal_list_with(animal_type_model)
+    def get(self):
+        """List all animal types."""
+        db = next(get_db())
+        return db.query(AnimalType).all()
+    
+    @ns.doc('create_animal_type')
+    @ns.expect(animal_type_model)
+    @ns.marshal_with(animal_type_model, code=201)
+    def post(self):
+        """Create a new animal type."""
+        data = request.get_json()
+        db = next(get_db())
+        
+        animal_type = AnimalType(
+            name=data['name'],
+            description=data.get('description')
+        )
+        
+        try:
+            db.add(animal_type)
+            db.commit()
+            db.refresh(animal_type)
+            return animal_type, 201
+        except IntegrityError:
+            db.rollback()
+            error_msg = f"Animal type with name '{data['name']}' already exists."
+            return {'success': False, 'message': error_msg}, 409
+        except Exception as e:
+            db.rollback()
+            return {'success': False, 'message': str(e)}, 400
+
+@ns.route('/<int:id>')
+@ns.response(404, 'Animal type not found')
+@ns.param('id', 'The animal type identifier')
+class AnimalTypeResource(Resource):
+    """Show a single animal type and lets you delete or update it."""
+    
+    @ns.doc('get_animal_type')
+    @ns.marshal_with(animal_type_model)
+    def get(self, id):
+        """Fetch a single animal type by ID."""
+        db = next(get_db())
+        animal_type = db.get(AnimalType, id)
+        if animal_type is None:
+            ns.abort(404, message=f"Animal type with ID {id} not found.")
+        return animal_type
+    
+    @ns.doc('update_animal_type')
+    @ns.expect(animal_type_model)
+    @ns.marshal_with(animal_type_model)
+    def put(self, id):
+        """Update an existing animal type."""
+        data = request.get_json()
+        db = next(get_db())
+        
+        animal_type = db.get(AnimalType, id)
+        if animal_type is None:
+            ns.abort(404, message=f"Animal type with ID {id} not found.")
+        
+        try:
+            # Update fields
+            if 'name' in data:
+                animal_type.name = data['name']
+            if 'description' in data:
+                animal_type.description = data['description']
+            
+            db.commit()
+            db.refresh(animal_type)
+            return animal_type
+        except IntegrityError:
+            db.rollback()
+            error_msg = f"Animal type with name '{data.get('name')}' already exists."
+            return {'success': False, 'message': error_msg}, 409
+        except Exception as e:
+            db.rollback()
+            return {'success': False, 'message': str(e)}, 400
+    
+    @ns.doc('delete_animal_type')
+    @ns.response(204, 'Animal type deleted')
+    def delete(self, id):
+        """Delete an animal type."""
+        db = next(get_db())
+        animal_type = db.get(AnimalType, id)
+        
+        if animal_type is None:
+            ns.abort(404, message=f"Animal type with ID {id} not found.")
+        
+        # Check if there are any animals of this type
+        if animal_type.animals:
+            return {'success': False, 'message': "Cannot delete animal type with associated animals."}, 400
+        
+        try:
+            db.delete(animal_type)
+            db.commit()
+            return {'success': True}, 204
+        except Exception as e:
+            db.rollback()
+            return {'success': False, 'message': str(e)}, 400

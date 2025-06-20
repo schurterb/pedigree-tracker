@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pedigree Tracker</title>
+    <link rel="stylesheet" href="css/normalize.css">
+    <link rel="stylesheet" href="css/styles.css">
+    
+    <!-- Treant.js Libraries -->
+    <script src="libs/treant-js/jquery.min.js"></script>
+    <script src="libs/treant-js/raphael.js"></script>
+    <script src="libs/treant-js/treant.js"></script>
+    <link rel="stylesheet" href="libs/treant-js/Treant.css">
+    
+    <!-- Custom styles -->
+    <link rel="stylesheet" href="css/pedigree-tree.css">
+    <link rel="stylesheet" href="css/pedigree-treant.css">
+    <link rel="stylesheet" href="css/tree-controls.css">
+    <link rel="stylesheet" href="css/export-controls.css">
+    <link rel="stylesheet" href="css/empty-states.css">
+    
+    <!-- Application scripts will be loaded at the end of body -->
+</head>
+<body>
+    <div class="app-container">
+        <!-- Top Navigation Bar with Animal Type Tabs -->
+        <header class="app-header">
+            <nav class="animal-tabs">
+                <!-- Animal type tabs will be dynamically loaded from the database -->
+                <button class="tab-btn tab-add" title="Add Animal Type">+</button>
+            </nav>
+        </header>
+
+        <!-- Main Content Area -->
+        <main class="app-main">
+            <!-- Animal List Sidebar -->
+            <aside class="animal-sidebar">
+                <div class="animal-list">
+                    <!-- Animal list items will be dynamically inserted here -->
+                    <div id="animal-list-container"></div>
+                </div>
+                <button id="sidebar-add-btn" class="secondary-btn">+ Add Animal</button>
+                <div class="settings-bar">
+                    <!-- (BNS - 2025/05/27) Commented out because not implemented -->
+                    <!-- <button class="settings-btn" title="Settings">⚙️</button>
+                    <button class="settings-btn" title="Export/Import" id="export-btn">📄</button>
+                    <button class="settings-btn" title="Help">?</button>
+                    <button class="settings-btn" title="More Options">...</button> -->
+                </div>
+            </aside>
+
+            <!-- Main Display Area -->
+            <section class="main-display">
+                <!-- Pedigree View (Default) -->
+                <div id="pedigree-view" class="view active">
+                    <div class="view-header">
+                        <h2 id="pedigree-title">Select an animal to view pedigree</h2>
+                        <div class="view-actions">
+                            <button id="edit-animal-btn" class="primary-btn" style="display: none;">View/Edit Details</button>
+                        </div>
+                    </div>
+                    <div id="pedigree-container" class="pedigree-container">
+                        <!-- Pedigree tree will be rendered here -->
+                        <div id="pedigree-tree" class="chart"></div>
+                        
+                        <!-- Tree controls -->
+                        <div class="tree-controls">
+                            <button id="zoom-in" class="control-btn" title="Zoom In">+</button>
+                            <button id="zoom-out" class="control-btn" title="Zoom Out">-</button>
+                            <button id="reset-view" class="control-btn" title="Reset View">↺</button>
+                            <button id="export-pedigree" class="control-btn" title="Export Pedigree">📄</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Animal Details View (Hidden by default) -->
+                <div id="details-view" class="view">
+                    <div class="view-header">
+                        <h2 id="details-title">Animal Details</h2>
+                        <div class="view-actions">
+                            <button id="save-details-btn" class="primary-btn">Save</button>
+                            <button id="show-pedigree-btn" class="secondary-btn">Pedigree</button>
+                        </div>
+                    </div>
+                    <div class="details-form">
+                        <div class="form-section">
+                            <h3>Basic Information</h3>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="animal-id">ID/Tag:</label>
+                                    <input type="text" id="animal-id">
+                                </div>
+                                <div class="form-group">
+                                    <label for="animal-type">Type:</label>
+                                    <select id="animal-type">
+                                        <!-- Animal types will be dynamically loaded -->
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="animal-name">Name:</label>
+                                    <input type="text" id="animal-name">
+                                </div>
+                                <div class="form-group">
+                                    <label for="animal-gender">Gender:</label>
+                                    <select id="animal-gender">
+                                        <option value="female">♀ Female</option>
+                                        <option value="male">♂ Male</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="animal-dob">Date of Birth:</label>
+                                    <input type="date" id="animal-dob">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-section">
+                            <h3>Lineage</h3>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="animal-mother">Mother:</label>
+                                    <select id="animal-mother">
+                                        <option value="">-- Select mother --</option>
+                                        <!-- Mothers will be dynamically loaded -->
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="animal-father">Father:</label>
+                                    <select id="animal-father">
+                                        <option value="">-- Select father --</option>
+                                        <!-- Fathers will be dynamically loaded -->
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-section">
+                            <h3>Notes</h3>
+                            <div class="form-row">
+                                <div class="form-group full-width">
+                                    <textarea id="animal-notes" rows="5"></textarea>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-section">
+                            <h3>Offspring</h3>
+                            <ul id="offspring-list" class="offspring-list">
+                                <!-- Offspring will be dynamically loaded -->
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Add Animal View (Hidden by default) -->
+                <div id="add-animal-view" class="view">
+                    <div class="view-header">
+                        <h2>New Animal</h2>
+                        <div class="view-actions">
+                            <button id="save-new-btn" class="primary-btn">Save</button>
+                            <button id="cancel-new-btn" class="secondary-btn">Cancel</button>
+                        </div>
+                    </div>
+                    <div class="details-form">
+                        <div class="form-section">
+                            <h3>Basic Information</h3>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="new-animal-id">ID/Tag:*</label>
+                                    <input type="text" id="new-animal-id" placeholder="Enter animal ID or tag" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="new-animal-type">Type:</label>
+                                    <select id="new-animal-type">
+                                        <!-- Animal types will be dynamically loaded -->
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="new-animal-name">Name:</label>
+                                    <input type="text" id="new-animal-name" placeholder="Enter animal name">
+                                </div>
+                                <div class="form-group">
+                                    <label for="new-animal-gender">Gender:</label>
+                                    <div class="radio-group">
+                                        <label>
+                                            <input type="radio" name="gender" value="female" checked>
+                                            <span>♀ Female</span>
+                                        </label>
+                                        <label>
+                                            <input type="radio" name="gender" value="male">
+                                            <span>♂ Male</span>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="new-animal-dob">Date of Birth:</label>
+                                    <input type="date" id="new-animal-dob">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-section">
+                            <h3>Lineage</h3>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="new-animal-mother">Mother:</label>
+                                    <select id="new-animal-mother">
+                                        <option value="">-- Select mother --</option>
+                                        <!-- Mothers will be dynamically loaded -->
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="new-animal-father">Father:</label>
+                                    <select id="new-animal-father">
+                                        <option value="">-- Select father --</option>
+                                        <!-- Fathers will be dynamically loaded -->
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-section">
+                            <h3>Notes</h3>
+                            <div class="form-row">
+                                <div class="form-group full-width">
+                                    <textarea id="new-animal-notes" rows="5" placeholder="Enter any notes about this animal"></textarea>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Modal for adding new animal type -->
+    <div id="add-type-modal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Add New Animal Type</h2>
+                <button class="close-modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="new-type-name">Name:</label>
+                    <input type="text" id="new-type-name" placeholder="Enter animal type name" required>
+                </div>
+                <div class="form-group">
+                    <label for="new-type-description">Description:</label>
+                    <textarea id="new-type-description" rows="3" placeholder="Enter description"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button id="save-type-btn" class="primary-btn">Save</button>
+                <button class="cancel-btn secondary-btn">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for export options -->
+    <div id="export-modal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Export Options</h2>
+                <button class="close-modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="export-options">
+                    <button id="export-pdf-btn" class="export-btn">Export as PDF</button>
+                    <button id="export-png-btn" class="export-btn">Export as PNG</button>
+                    <button id="export-json-btn" class="export-btn">Export Data as JSON</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading indicator -->
+    <div id="loading-indicator" class="hidden">
+        <div class="spinner"></div>
+    </div>
+
+    <!-- Toast notifications -->
+    <div id="toast-container"></div>
+
+    <!-- Modal Backdrop -->
+    <div id="modal-backdrop" class="hidden"></div>
+
+    <!-- Treant.js Libraries -->
+    <script src="libs/treant-js/jquery.min.js"></script>
+    <script src="libs/treant-js/raphael.js"></script>
+    <script src="libs/treant-js/treant.js"></script>
+    
+    <!-- Export Libraries -->
+    <script src="libs/html2canvas.min.js"></script>
+    <script src="libs/html2pdf.bundle.min.js"></script>
+    
+    <!-- Application scripts -->
+    <script src="js/config.js?v=20250522"></script>
+    <script src="js/api.js?v=20250522"></script>
+    <script src="js/utils.js?v=20250522"></script>
+    <script src="js/pedigree-treant.js?v=20250528"></script>
+    <script src="js/pedigree-tree.js?v=20250528"></script>
+    <script src="js/export.js?v=20250522"></script>
+    <script src="js/app.js?v=20250522"></script>
+</body>
+</html>

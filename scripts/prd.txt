@@ -1,0 +1,242 @@
+# Overview  
+The Pedigree Tracker is a specialized tool designed for farmers and breeders to maintain comprehensive records of their livestock's ancestry and genealogical information. This application solves the problem of tracking complex family relationships between farm animals, which is crucial for effective breeding programs, avoiding inbreeding, and maintaining genetic diversity. It provides an intuitive interface for visualizing multi-generational pedigrees, enabling users to make informed breeding decisions and manage their animal populations effectively.
+
+# Core Features  
+
+## Animal Type Management
+- **What it does**: Enables users to create, edit, and delete different animal types (e.g., cattle, horses, sheep)
+- **Why it's important**: Provides flexibility to support various livestock species with their unique identification needs
+- **How it works**: Users can define animal types with unique names and optional descriptions through a simple interface
+
+## Animal Management
+- **What it does**: Allows users to catalog and maintain detailed records of individual animals
+- **Why it's important**: Creates a comprehensive database of all animals with their identifiers, attributes, and parental relationships
+- **How it works**: Each animal record includes unique identifier, name (optional), type, gender, date of birth, parents (if known), and status, with support for additional notes and descriptions
+
+## Pedigree Visualization
+- **What it does**: Generates visual pedigree trees showing an animal's ancestry across multiple generations
+- **Why it's important**: Enables users to understand complex genealogical relationships at a glance
+- **How it works**: Dynamically renders pedigree charts up to 5 generations deep, properly handling missing parent information and highlighting genetic relationships
+
+## Data Export
+- **What it does**: Exports pedigree charts as PNG images for printing or external use
+- **Why it's important**: Allows users to share information or maintain physical records
+- **How it works**: Converts the visualized pedigree chart to a high-quality image file via HTML-to-Canvas conversion
+
+# User Experience  
+
+## User Personas
+1. **Small Farm Owner**: Manages a modest collection of animals, needs basic record-keeping and pedigree visualization
+2. **Professional Breeder**: Works with specific breeds, requires detailed pedigree information for genetic planning
+3. **Livestock Manager**: Oversees large populations of animals, needs efficient filtering and search capabilities
+
+## Key User Flows
+1. **Animal Type Setup**: User creates animal types relevant to their farm operations
+2. **Animal Record Creation**: User adds new animals to the system, including their parental relationships
+3. **Pedigree Exploration**: User selects an animal and visualizes its ancestry to various generations
+4. **Animal Information Update**: User updates animal status, notes, or corrects information
+5. **Pedigree Export**: User exports a pedigree chart for printing or sharing
+
+## UI/UX Considerations
+- **Tab-Based Navigation**: Horizontal tabs for switching between animal types
+- **Two-Panel Layout**: Animal list sidebar + main content area for details/pedigree view
+- **Visual Indicators**: Clear gender symbols (♀/♂) and status indicators
+- **Responsive Design**: Adapts to different screen sizes while maintaining usability
+- **Minimal Modal Use**: Direct inline editing of animal details where possible
+
+# Technical Architecture  
+
+## System Components
+1. **Backend API**: Node.js with Express.js REST API
+2. **Database Layer**: SQLite with models for AnimalType and Animal
+3. **Frontend Application**: Single Page Application using modern JavaScript framework
+4. **Visualization Engine**: Client-side pedigree rendering using D3.js or Plotly.js
+5. **Export Service**: HTML-to-Canvas conversion for generating PNG exports
+
+## Data Models
+1. **AnimalType**:
+   - id: INTEGER (Primary key)
+   - name: VARCHAR(50) (Unique)
+   - description: VARCHAR(200)
+   - created_at: DATETIME
+
+2. **Animal**:
+   - id: INTEGER (Primary key)
+   - identifier: VARCHAR(50) (Unique within type)
+   - type_id: INTEGER (Foreign key to AnimalType)
+   - name: VARCHAR(100)
+   - gender: VARCHAR(10)
+   - date_of_birth: DATE
+   - description: TEXT
+   - notes: TEXT
+   - mother_id: INTEGER (Self-referential foreign key)
+   - father_id: INTEGER (Self-referential foreign key)
+   - status: VARCHAR(20)
+   - created_at: DATETIME
+   - updated_at: DATETIME
+
+## APIs and Integrations
+1. **Animal Type Endpoints**:
+   - GET /api/v1/animal-types - List all types
+   - GET /api/v1/animal-types/:id - Get specific type
+   - POST /api/v1/animal-types - Create new type
+   - PUT /api/v1/animal-types/:id - Update type
+   - DELETE /api/v1/animal-types/:id - Delete type
+
+2. **Animal Endpoints**:
+   - GET /api/v1/animals - List animals with filtering
+   - GET /api/v1/animals/:id - Get specific animal
+   - POST /api/v1/animals - Create new animal
+   - PUT /api/v1/animals/:id - Update animal
+   - DELETE /api/v1/animals/:id - Delete animal
+
+3. **Pedigree Endpoints**:
+   - GET /api/v1/animals/:id/pedigree - Get pedigree data
+   - GET /api/v1/animal-types/:type_id/potential-parents - List potential parents
+   - GET /api/v1/animals/:id/offspring - List offspring
+
+## Infrastructure Requirements
+1. **Development Environment**: Node.js runtime with npm for package management
+2. **Database**: SQLite for data storage (self-contained file)
+3. **Server**: Lightweight Node.js server to host the application
+4. **Client Requirements**: Modern web browser with JavaScript support
+5. **Deployment**: Simple deployment with minimal dependencies
+
+# Development Roadmap  
+
+## MVP Requirements
+1. **Foundation Setup**:
+   - Project structure and configuration
+   - Database schema creation
+   - Basic API endpoints
+
+2. **Core Data Management**:
+   - Animal type management (CRUD operations)
+   - Animal management (CRUD operations)
+   - Parent-child relationship tracking
+
+3. **Basic UI Implementation**:
+   - Application layout and navigation
+   - Animal type tabs
+   - Animal list display
+   - Basic animal details display
+
+4. **Basic Pedigree Functionality**:
+   - Simple pedigree data structure
+   - Basic visualization of 2-3 generations
+   - Minimal styling and interactivity
+
+## Future Enhancements
+1. **Advanced Pedigree Features**:
+   - Configurable generation depth (up to 5)
+   - Enhanced visual styling
+   - Interactive pedigree exploration
+   - Highlighting of genetic relationships
+
+2. **Data Export Capabilities**:
+   - PNG export of pedigree charts
+   - Print-friendly formatting
+
+3. **Enhanced Data Management**:
+   - Bulk operations for animals
+   - Advanced filtering and searching
+   - Animal status lifecycle management
+
+4. **Extended Features**:
+   - Genetic trait tracking
+   - Breeding recommendations
+   - Import/export of animal data via CSV
+   - Backup and restore functionality
+
+# Logical Dependency Chain
+
+## Foundation Layer
+1. Project structure setup
+2. Database schema implementation
+3. Core models (AnimalType, Animal)
+4. Basic REST API endpoints
+
+## Data Management Layer
+1. Animal type management interface
+2. Animal list view and filtering
+3. Animal detail view and editing
+4. Parent selection interface
+
+## Visualization Layer
+1. Basic pedigree data transformation
+2. Simple pedigree tree rendering
+3. Enhanced pedigree visualization
+4. Generation depth control
+5. PNG export functionality
+
+## User Experience Refinement
+1. Responsive design implementation
+2. UX improvements for common tasks
+3. Performance optimization for large datasets
+4. Cross-browser testing and fixes
+
+# Risks and Mitigations  
+
+## Technical Challenges
+1. **Risk**: Complex pedigree visualization with multiple generations
+   - **Mitigation**: Start with simple 2-generation view, then incrementally enhance; research visualization libraries early
+
+2. **Risk**: Self-referential relationships in the database
+   - **Mitigation**: Careful schema design with proper foreign key constraints; thorough testing of edge cases
+
+3. **Risk**: Performance with large animal datasets
+   - **Mitigation**: Implement pagination; optimize queries with proper indexes; lazy load pedigree data
+
+## MVP Scope Management
+1. **Risk**: Feature scope creep beyond core functionality
+   - **Mitigation**: Clearly define MVP requirements; maintain prioritized backlog; defer enhancements to future releases
+
+2. **Risk**: Overly complex UI in initial version
+   - **Mitigation**: Focus on essential workflows first; implement progressive enhancement
+
+3. **Risk**: Data integrity issues with genealogical relationships
+   - **Mitigation**: Implement robust validation rules; provide clear error messages for invalid relationships
+
+## Resource Constraints
+1. **Risk**: Limited development time
+   - **Mitigation**: Focus on core functionality first; use existing libraries where possible; maintain modular architecture
+
+2. **Risk**: Browser compatibility issues
+   - **Mitigation**: Standardize on modern but well-supported web technologies; test early on various browsers
+
+3. **Risk**: Learning curve for visualization libraries
+   - **Mitigation**: Research and select well-documented libraries; create simple prototypes early to verify approach
+
+# Appendix  
+
+## Research Findings
+- Modern livestock management increasingly relies on genetic information for breeding decisions
+- Pedigree visualization is a standard practice in professional breeding programs
+- Most existing solutions are either expensive commercial software or overly complex for small farms
+
+## Technical Specifications
+
+### Project Structure
+```
+pedigree-tracker/
+├── config/            # Configuration files
+├── data/              # SQLite database and any data files
+├── logs/              # Application logs
+├── scripts/           # Utility scripts
+├── src/               # Server-side Nodejs code
+├── www/               # Web files / client-side code
+├── tests/             # Test files
+└── README.md
+```
+
+### Database Indexes
+1. Index on `Animal.type_id`
+2. Index on `Animal.mother_id` 
+3. Index on `Animal.father_id`
+4. Composite index on `(Animal.type_id, Animal.identifier)`
+
+### Visualization Requirements
+- Support for incomplete pedigree data (missing parents)
+- Clear visual differentiation between males and females
+- Compact display of multiple generations
+- Readable labels with animal identifiers and names

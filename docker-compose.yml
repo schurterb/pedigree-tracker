@@ -1,0 +1,17 @@
+services:
+  pedigree-tracker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    volumes:
+      # Mount the data directory for database persistence
+      - ./data:/app/data
+      # Mount logs directory for log persistence
+      - ./logs:/app/logs
+    environment:
+      - FLASK_APP=src.app
+      - FLASK_ENV=production
+      # You can set additional environment variables here
+    restart: unless-stopped

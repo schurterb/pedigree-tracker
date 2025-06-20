@@ -1,0 +1,121 @@
+/* Export Controls Styles */
+
+.export-controls {
+    margin-top: 20px;
+    padding: 15px;
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.export-controls h3 {
+    margin-top: 0;
+    margin-bottom: 15px;
+    font-size: 1.1em;
+    color: var(--secondary-color);
+}
+
+.export-options {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.export-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 10px 15px;
+    background-color: var(--accent-color);
+    color: var(--secondary-color);
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    border: none;
+    text-align: center;
+}
+
+.export-btn:hover {
+    background-color: var(--primary-light);
+    color: white;
+}
+
+.export-btn:active {
+    transform: translateY(1px);
+}
+
+.export-btn svg, .export-btn img {
+    margin-right: 8px;
+    width: 18px;
+    height: 18px;
+}
+
+/* Specific button styling */
+#export-pdf-btn {
+    background-color: #f8d7da;
+    color: #721c24;
+}
+
+#export-pdf-btn:hover {
+    background-color: #e77681;
+    color: white;
+}
+
+#export-png-btn {
+    background-color: #d1ecf1;
+    color: #0c5460;
+}
+
+#export-png-btn:hover {
+    background-color: #56c8d8;
+    color: white;
+}
+
+#export-json-btn {
+    background-color: #d4edda;
+    color: #155724;
+}
+
+#export-json-btn:hover {
+    background-color: #5dd879;
+    color: white;
+}
+
+/* Export Progress */
+.export-progress {
+    margin-top: 10px;
+    display: none;
+}
+
+.export-progress.active {
+    display: block;
+}
+
+.progress-bar {
+    height: 6px;
+    background-color: #eee;
+    border-radius: 3px;
+    overflow: hidden;
+    margin-bottom: 8px;
+}
+
+.progress-bar-fill {
+    height: 100%;
+    background-color: var(--primary-color);
+    width: 0%;
+    transition: width 0.3s ease;
+}
+
+.progress-status {
+    font-size: 0.8em;
+    color: var(--text-light);
+    text-align: center;
+}
+
+/* Mobile responsive adjustments */
+@media (max-width: 768px) {
+    .export-options {
+        flex-direction: column;
+    }
+}

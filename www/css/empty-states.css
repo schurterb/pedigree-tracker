@@ -1,0 +1,50 @@
+/* Empty States and Error States */
+
+.empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    min-height: 300px;
+    padding: 2rem;
+    margin: 2rem auto;
+    background-color: var(--accent-color);
+    border-radius: 8px;
+    max-width: 800px;
+}
+
+.empty-state h2 {
+    color: var(--secondary-color);
+    margin-bottom: 1rem;
+    font-size: 1.8rem;
+}
+
+.empty-state p {
+    color: var(--text-color);
+    font-size: 1.1rem;
+    line-height: 1.5;
+    margin-bottom: 1.5rem;
+}
+
+.error-state {
+    background-color: #f8d7da;
+    border: 1px solid #f5c2c7;
+}
+
+.error-state h2 {
+    color: #842029;
+}
+
+.error-state p {
+    color: #58151c;
+}
+
+.error-state .primary-btn {
+    margin-top: 1rem;
+    background-color: #842029;
+}
+
+.error-state .primary-btn:hover {
+    background-color: #58151c;
+}

@@ -1,0 +1,44 @@
+/* Tree Control Styles */
+
+.tree-controls {
+    position: absolute;
+    right: 15px;
+    top: 15px;
+    background-color: white;
+    border-radius: 4px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    padding: 5px;
+    display: flex;
+    flex-direction: column;
+    z-index: 5;
+}
+
+.control-btn {
+    background: none;
+    border: none;
+    padding: 8px;
+    font-size: 16px;
+    cursor: pointer;
+    color: var(--secondary-color);
+    border-radius: 3px;
+    margin: 2px;
+    transition: background-color 0.2s ease;
+}
+
+.control-btn:hover {
+    background-color: var(--accent-color);
+}
+
+.control-btn:active {
+    background-color: var(--primary-light);
+    color: white;
+}
+
+/* Mobile responsive adjustments */
+@media (max-width: 768px) {
+    .tree-controls {
+        flex-direction: row;
+        top: auto;
+        bottom: 15px;
+    }
+}

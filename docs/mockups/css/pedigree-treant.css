@@ -1,0 +1,143 @@
+/**
+ * Pedigree Treant.js Visualization Styles for Mockup
+ * 
+ * Custom styles for the horizontal pedigree tree display
+ */
+
+.Treant { position: relative; overflow: hidden; padding: 0 !important; }
+.Treant > .node,
+.Treant > .pseudo { position: absolute; display: block; visibility: hidden; }
+.Treant.loaded .node,
+.Treant.loaded .pseudo { visibility: visible; }
+.Treant > .pseudo { width: 0; height: 0; border: none; padding: 0; }
+.Treant .collapse-switch { width: 3px; height: 3px; display: block; position: absolute; 
+    right: 1px; top: 1px; border-radius: 3px; cursor: pointer; }
+
+/* Pedigree node styling */
+.pedigree-node {
+    padding: 12px;
+    border-radius: 8px;
+    width: 200px;
+    background-color: white;
+    border: 1px solid rgba(0,0,0,0.1);
+    box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+/* Node hover effects */
+.pedigree-node:hover {
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    transform: translateY(-2px);
+}
+
+/* Gender-specific styling */
+.pedigree-node.male {
+    border-left: 5px solid #4f7bd1;
+    background-color: #e9f1fc;
+}
+
+.pedigree-node.female {
+    border-left: 5px solid #d14f69;
+    background-color: #fce9ef;
+}
+
+.pedigree-node.unknown {
+    border-left: 5px solid #777;
+    background-color: #f5f5f5;
+}
+
+/* Node content */
+.node-name {
+    font-weight: bold;
+    margin-bottom: 5px;
+    font-size: 16px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.node-details {
+    font-size: 13px;
+    margin-bottom: 3px;
+    color: #555;
+}
+
+.node-metadata {
+    font-size: 12px;
+    color: #666;
+    font-style: italic;
+    margin-top: 3px;
+    line-height: 1.3;
+}
+
+/* Gender icons */
+.gender-icon {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    text-align: center;
+    line-height: 20px;
+    font-size: 12px;
+    margin-right: 8px;
+    vertical-align: middle;
+}
+
+.gender-icon.female {
+    background-color: #f8d7e3;
+    color: #d14f69;
+}
+
+.gender-icon.male {
+    background-color: #d7e3f8;
+    color: #4f7bd1;
+}
+
+/* Selected node styling */
+.pedigree-node.selected {
+    box-shadow: 0 0 0 3px #4f7bd1;
+    transform: scale(1.05);
+    z-index: 10;
+}
+
+/* Tree container */
+#pedigree-tree {
+    height: 600px;
+    width: 100%;
+    margin: 0;
+    background-color: #fff;
+    overflow: auto;
+}
+
+/* Collapse switch styling */
+.pedigree-node .collapse-switch {
+    width: 20px;
+    height: 20px;
+    background-color: #f1f1f1;
+    border: 1px solid #ddd;
+    border-radius: 3px;
+    right: 10px;
+    bottom: 10px;
+    text-align: center;
+    line-height: 20px;
+}
+
+.pedigree-node .collapse-switch::before {
+    content: "-";
+    color: #777;
+}
+
+.pedigree-node.collapsed .collapse-switch::before {
+    content: "+";
+}
+
+/* Make the pedigree container fill the available space */
+.pedigree-container {
+    height: calc(100% - 60px);
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 0;
+    background-color: #fdfdfd;
+    position: relative;
+}

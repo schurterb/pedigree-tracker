@@ -1,0 +1,56 @@
+
+# Dependency directories
+node_modules/
+venv/
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Environment variables
+.env
+.env.*
+!.env.example
+!.env.example.app
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+data/*.db
+
+# Docker
+docker-volumes/
+
+# Editor directories and files
+.idea/
+.vscode/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# OS specific
+.DS_Store
+Thumbs.db
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+test.log
+
+# Coverage reports
+.coverage
+htmlcov/
+
+# Cache
+.pytest_cache/
+.roo/
+.cache/
+
+# Task files
+tasks.json
+tasks/ 

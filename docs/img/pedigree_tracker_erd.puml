@@ -1,0 +1,67 @@
+@startuml Pedigree Tracker ERD
+
+!define PRIMARY_KEY(x) <b><color:#b8861b><&key></color> x</b>
+!define FOREIGN_KEY(x) <color:#aaaaaa><&key></color> x
+!define REQUIRED(x) <b>x</b>
+!define INDEX(x) <color:#3333ff><&layers></color> x
+
+skinparam linetype ortho
+skinparam shadowing false
+skinparam dpi 300
+skinparam monochrome false
+skinparam class {
+    BackgroundColor white
+    ArrowColor black
+    BorderColor black
+}
+
+entity "AnimalType" as animal_type {
+  PRIMARY_KEY(id) : INTEGER <<generated>>
+  --
+  REQUIRED(name) : VARCHAR(50) <<unique>>
+  description : VARCHAR(200)
+  REQUIRED(created_at) : DATETIME
+}
+
+entity "Animal" as animal {
+  PRIMARY_KEY(id) : INTEGER <<generated>>
+  --
+  REQUIRED(identifier) : VARCHAR(50)
+  FOREIGN_KEY(type_id) : INTEGER <<not null>>
+  name : VARCHAR(100)
+  gender : VARCHAR(10)
+  date_of_birth : DATE
+  description : TEXT
+  notes : TEXT
+  FOREIGN_KEY(mother_id) : INTEGER
+  FOREIGN_KEY(father_id) : INTEGER
+  REQUIRED(status) : VARCHAR(20) <<default: 'active'>>
+  REQUIRED(created_at) : DATETIME
+  REQUIRED(updated_at) : DATETIME
+  --
+  INDEX((type_id, identifier)) <<unique>>
+  INDEX(type_id)
+  INDEX(mother_id)
+  INDEX(father_id)
+}
+
+' One animal type has many animals
+animal_type ||--|{ animal : "has"
+
+' Self-referential relationships for animal
+animal }o--|| animal : "has mother"
+animal }o--|| animal : "has father"
+
+note bottom of animal
+  Constraints:
+  - Identifier is unique within a type (type_id, identifier)
+  - Mother and father must be of the same type as the animal
+  - Status values can be: active, breedable, retired, deceased, etc.
+end note
+
+note bottom of animal_type
+  Represents different categories of animals
+  (e.g., Cattle, Horses, Sheep, etc.)
+end note
+
+@enduml
