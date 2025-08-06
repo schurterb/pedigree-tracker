@@ -53,12 +53,26 @@ def create_app():
     
     # Register blueprints
     from .api import api_bp
+    
+    # Register API blueprint at root path
     app.register_blueprint(api_bp, url_prefix='/api/v1')
     
     # Serve static files from www directory
     @app.route('/', defaults={'path': 'index.html'})
     @app.route('/<path:path>')
     def serve_static(path):
+        # Avoid serving files from /api path
+        if path.startswith('api/'):
+            return jsonify({
+                'error': 'Not Found',
+                'message': 'The requested URL was not found on the server.'
+            }), 404
+        return send_from_directory(www_folder, path)
+        
+    # Serve static files from www directory under / route
+    @app.route('/', defaults={'path': 'index.html'})
+    @app.route('/<path:path>')
+    def serve_pedigree_tracker(path):
         # Avoid serving files from /api path
         if path.startswith('api/'):
             return jsonify({
