@@ -17,6 +17,9 @@ const API = {
         try {
             // Build URL with query parameters
             let url = `${CONFIG.API_BASE_URL}${endpoint}`;
+            if(!url.endsWith('/')) {
+                url += '/';
+            }
             if (Object.keys(queryParams).length > 0) {
                 const params = new URLSearchParams();
                 for (const [key, value] of Object.entries(queryParams)) {

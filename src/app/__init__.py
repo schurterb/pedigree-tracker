@@ -41,8 +41,8 @@ def create_app(test_config=None):
     # Register blueprints
     app.register_blueprint(api_blueprint, url_prefix=API_PREFIX)
     
-    # Enable CORS
-    CORS(app)
+    # Enable CORS - Allow all methods on '/api/*' from same domain/IP (any port)
+    CORS(app, resources={r"/api/*": {"origins": "*"}}, supports_credentials=True, methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"], vary_header=True)
     
     @app.teardown_appcontext
     def shutdown_session(exception=None):
