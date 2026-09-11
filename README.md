@@ -1,6 +1,6 @@
 # Pedigree Tracker
 
-A comprehensive tool for farmers and breeders to track and visualize animal pedigrees, enabling better breeding decisions and genetic management.
+A simple tool for farmers and breeders to track and visualize animal pedigrees, enabling better breeding decisions and genetic management.
 
 ## Features
 
