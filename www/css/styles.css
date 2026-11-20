@@ -124,6 +124,44 @@ button {
   background-color: #c7d9e3;
 }
 
+.danger-btn {
+  background-color: var(--warning-color);
+  color: white;
+  font-weight: 500;
+}
+
+.danger-btn:hover {
+  background-color: #c0392b;
+}
+
+.tab-edit {
+  padding: 10px 12px;
+  font-size: 14px;
+  color: var(--text-light);
+}
+
+.tab-edit:hover {
+  color: var(--primary-color);
+}
+
+.edit-type-footer .danger-btn {
+  margin-right: auto;
+}
+
+.offspring-link {
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  color: var(--primary-color);
+  text-align: left;
+  cursor: pointer;
+}
+
+.offspring-link:hover {
+  text-decoration: underline;
+}
+
 /* Main Content Area */
 .app-main {
   display: flex;
@@ -172,6 +210,23 @@ button {
   align-items: center;
   flex: 1;
   cursor: pointer;
+}
+
+/* Keyboard-accessible animal row selection button */
+.animal-select-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  text-align: left;
+  font: inherit;
+  color: inherit;
+  min-width: 0;
+}
+
+.animal-select-btn:focus-visible {
+  outline: 2px solid var(--primary-color);
+  outline-offset: 2px;
+  border-radius: 4px;
 }
 
 .gender-icon {

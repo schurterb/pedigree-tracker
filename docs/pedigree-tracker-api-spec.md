@@ -413,7 +413,46 @@ Get a list of offspring for a specific animal.
 - 200: OK - Request succeeded
 - 201: Created - Resource was successfully created
 - 204: No Content - Request succeeded but no content to return
-- 400: Bad Request - Invalid request parameters
+- 400: Bad Request - Malformed request or validation error
 - 404: Not Found - Resource not found
-- 422: Unprocessable Entity - Validation error
+- 409: Conflict - Uniqueness constraint violated
 - 500: Internal Server Error - Server-side error
+
+## Error Format
+
+All validation failures return HTTP 400 with a field-keyed error map:
+
+```json
+{
+  "message": "Invalid animal data.",
+  "errors": {
+    "identifier": "Identifier is required.",
+    "date_of_birth": "Date of birth cannot be in the future."
+  }
+}
+```
+
+404 and 409 responses return `{"message": "..."}` without an `errors` map.
+Error bodies never contain SQL statements, parameters, or stack traces;
+those are only written to the server log.
+
+## Validation Rules
+
+- `identifier`: required, non-blank after trimming, max 50 chars. Unique
+  within the animal type (category) - the same identifier may be reused in
+  a different type.
+- `gender`: one of `male`, `female`, `unknown`. Defaults to `unknown`.
+- `date_of_birth`: `YYYY-MM-DD`, optional, may not be in the future.
+- `mother_id`: must reference an existing `female` animal of the **same**
+  type; `father_id` must reference an existing `male` animal of the same
+  type. `null` clears the parent.
+- An animal cannot be its own parent, mother and father cannot be the same
+  animal, and parentage may not create a cycle.
+- If both parent and child birth dates are known, the child's DOB must be
+  after each parent's DOB.
+- Changing an animal's gender, type, or DOB is rejected when it would
+  invalidate its recorded offspring (e.g. making a recorded mother male).
+- `pedigree?generations=N`: `N` must be an integer >= 1; values above 5
+  are clamped to 5.
+- Animal type names are required, non-blank after trimming, max 50 chars,
+  and unique case-insensitively.

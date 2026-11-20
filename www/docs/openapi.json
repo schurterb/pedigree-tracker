@@ -1,0 +1,1050 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Pedigree Tracker API",
+    "version": "1.0.0",
+    "license": {
+      "name": "MIT",
+      "url": "https://opensource.org/licenses/MIT"
+    },
+    "description": "REST API for managing animal types (categories), individual animals, and their genealogical relationships.\n\n## Conventions\n\n- All request and response bodies are JSON (`Content-Type: application/json`).\n- No authentication is required (single-user / local deployments).\n- Every endpoint accepts both `/path` and `/path/` **without** redirects (`strict_slashes=False`). Collection paths are conventionally written with a trailing slash; item and sub-resource paths without.\n- CORS allows all origins on `/api/*` for `GET, POST, PUT, DELETE, OPTIONS, PATCH`.\n- All responses are raw JSON resources. There is no `{\"data\": ...}` envelope, and list endpoints return a plain JSON array (no pagination).\n\n## Errors\n\nValidation failures return HTTP 400 with a summary `message` plus an `errors` map keyed by field. Business-rule rejections, 404, and 409 responses return only a `message`.\n\n## Lineage invariants\n\n- `identifier` is required, non-blank after trimming, max 50 chars, and unique **within its animal type** (the same identifier may be reused in a different type). Duplicates on create/update return 409.\n- `gender` must be `male`, `female`, or `unknown` (default `unknown`).\n- `date_of_birth` is optional (`YYYY-MM-DD`) and may not be in the future.\n- `mother_id` must reference an existing `female` animal of the **same** type; `father_id` an existing `male` of the same type. On update, `null` clears the parent; omitting the field leaves it unchanged.\n- An animal cannot be its own parent, mother and father cannot be the same animal, and parentage may not create a cycle.\n- When both parent and child birth dates are known, the child's DOB must be strictly after each parent's DOB.\n- Updates that would invalidate recorded offspring are rejected: changing `gender` of a recorded parent, changing `type_id` of an animal with recorded parents or offspring, or setting a DOB on/after a recorded offspring's DOB.\n- Deleting an animal with offspring (400) or an animal type that still has animals (400) is rejected.\n- Animal type `name` is required, non-blank after trimming, max 50 chars, and unique case-insensitively (409 on duplicates)."
+  },
+  "servers": [
+    {
+      "url": "/api/v1",
+      "description": "Pedigree Tracker API v1"
+    }
+  ],
+  "tags": [
+    {
+      "name": "Animal Types",
+      "description": "Animal type (category) operations"
+    },
+    {
+      "name": "Animals",
+      "description": "Animal and genealogy operations"
+    },
+    {
+      "name": "Diagnostics",
+      "description": "Health and status endpoints"
+    }
+  ],
+  "paths": {
+    "/animal-types/": {
+      "get": {
+        "tags": ["Animal Types"],
+        "summary": "List animal types",
+        "description": "Returns all animal types.",
+        "operationId": "listAnimalTypes",
+        "responses": {
+          "200": {
+            "description": "All animal types.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/AnimalType" }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["Animal Types"],
+        "summary": "Create an animal type",
+        "description": "Creates a new animal type (category).",
+        "operationId": "createAnimalType",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/AnimalTypeCreate" },
+              "examples": {
+                "goats": {
+                  "value": {
+                    "name": "Goats",
+                    "description": "Farm goats"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Animal type created.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/AnimalType" }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error (missing/blank/oversized name).",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ValidationError" }
+              }
+            }
+          },
+          "409": {
+            "description": "An animal type with this name (case-insensitive) already exists.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/MessageError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/animal-types/{id}": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/AnimalTypeId"
+        }
+      ],
+      "get": {
+        "tags": ["Animal Types"],
+        "summary": "Get an animal type",
+        "description": "Fetches a single animal type by ID.",
+        "operationId": "getAnimalType",
+        "responses": {
+          "200": {
+            "description": "The animal type.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/AnimalType" }
+              }
+            }
+          },
+          "404": {
+            "description": "Animal type not found.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/MessageError" }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": ["Animal Types"],
+        "summary": "Update an animal type",
+        "description": "Partial update; absent fields are left unchanged.",
+        "operationId": "updateAnimalType",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/AnimalTypeUpdate" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Animal type updated.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/AnimalType" }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ValidationError" }
+              }
+            }
+          },
+          "404": {
+            "description": "Animal type not found.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/MessageError" }
+              }
+            }
+          },
+          "409": {
+            "description": "An animal type with this name already exists.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/MessageError" }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": ["Animal Types"],
+        "summary": "Delete an animal type",
+        "description": "Deletes an animal type. Only allowed when it has no animals.",
+        "operationId": "deleteAnimalType",
+        "responses": {
+          "204": {
+            "description": "Animal type deleted; empty body."
+          },
+          "400": {
+            "description": "The animal type still has animals.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/MessageError" }
+              }
+            }
+          },
+          "404": {
+            "description": "Animal type not found.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/MessageError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/animal-types/{id}/potential-parents": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/AnimalTypeId"
+        }
+      ],
+      "get": {
+        "tags": ["Animal Types"],
+        "summary": "List potential parents",
+        "description": "Lists animals of the given type that may be selected as parents, ordered by `identifier`.",
+        "operationId": "listPotentialParents",
+        "parameters": [
+          {
+            "name": "gender",
+            "in": "query",
+            "required": false,
+            "description": "Filter by gender. Any value other than `male` or `female` returns 400.",
+            "schema": {
+              "type": "string",
+              "enum": ["male", "female"]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Potential parents of the given type.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/PotentialParent" }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid gender filter.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ValidationError" }
+              }
+            }
+          },
+          "404": {
+            "description": "Animal type not found.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/MessageError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/animals/": {
+      "get": {
+        "tags": ["Animals"],
+        "summary": "List animals",
+        "description": "Returns all animals, with optional filtering. No pagination.",
+        "operationId": "listAnimals",
+        "parameters": [
+          {
+            "name": "type_id",
+            "in": "query",
+            "required": false,
+            "description": "Filter by animal type ID.",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "active",
+            "in": "query",
+            "required": false,
+            "description": "Filter by active status. Case-insensitive; anything other than `true` matches inactive animals.",
+            "schema": {
+              "type": "string",
+              "enum": ["true", "false"]
+            }
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "required": false,
+            "description": "Case-insensitive substring match on `name` or `identifier`.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "All matching animals.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/Animal" }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["Animals"],
+        "summary": "Create an animal",
+        "description": "Creates an animal. `identifier` and `type_id` are required. Parent links must satisfy the lineage invariants.",
+        "operationId": "createAnimal",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/AnimalCreate" },
+              "examples": {
+                "daisy": {
+                  "value": {
+                    "identifier": "C045",
+                    "name": "Daisy",
+                    "type_id": 1,
+                    "gender": "female",
+                    "date_of_birth": "2024-02-20",
+                    "mother_id": 12,
+                    "father_id": 8
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Animal created.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Animal" }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error (field errors and/or lineage violations).",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ValidationError" }
+              }
+            }
+          },
+          "409": {
+            "description": "Identifier already exists in this category.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/MessageError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/animals/{id}": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/AnimalId"
+        }
+      ],
+      "get": {
+        "tags": ["Animals"],
+        "summary": "Get an animal",
+        "description": "Fetches a single animal by ID, including its nested animal type.",
+        "operationId": "getAnimal",
+        "responses": {
+          "200": {
+            "description": "The animal.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Animal" }
+              }
+            }
+          },
+          "404": {
+            "description": "Animal not found.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/MessageError" }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": ["Animals"],
+        "summary": "Update an animal",
+        "description": "Partial update - fields absent from the body are left unchanged. Setting `mother_id` or `father_id` to `null` explicitly clears that parent.",
+        "operationId": "updateAnimal",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/AnimalUpdate" },
+              "examples": {
+                "renameAndClearFather": {
+                  "value": {
+                    "name": "Daisy Belle",
+                    "father_id": null
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Animal updated.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Animal" }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error (including reverse-edge protections on gender, type, DOB).",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ValidationError" }
+              }
+            }
+          },
+          "404": {
+            "description": "Animal not found.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/MessageError" }
+              }
+            }
+          },
+          "409": {
+            "description": "Identifier already exists in this category.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/MessageError" }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": ["Animals"],
+        "summary": "Delete an animal",
+        "description": "Deletes an animal. Only allowed when it has no recorded offspring.",
+        "operationId": "deleteAnimal",
+        "responses": {
+          "204": {
+            "description": "Animal deleted; empty body."
+          },
+          "400": {
+            "description": "Animal is a parent of other animals.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/MessageError" }
+              }
+            }
+          },
+          "404": {
+            "description": "Animal not found.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/MessageError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/animals/{id}/pedigree": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/AnimalId"
+        }
+      ],
+      "get": {
+        "tags": ["Animals"],
+        "summary": "Get a pedigree tree",
+        "description": "Returns the animal's ancestor tree as nested `PedigreeNode` objects. `mother` and `father` are `null` when unknown or past the depth limit.",
+        "operationId": "getAnimalPedigree",
+        "parameters": [
+          {
+            "name": "generations",
+            "in": "query",
+            "required": false,
+            "description": "Generations to include; default 3, range 1-5 (values above 5 are clamped).",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 5,
+              "default": 3
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Pedigree tree.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/PedigreeNode" }
+              }
+            }
+          },
+          "400": {
+            "description": "Generations must be an integer between 1 and 5.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/MessageError" }
+              }
+            }
+          },
+          "404": {
+            "description": "Animal not found.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/MessageError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/animals/{id}/offspring": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/AnimalId"
+        }
+      ],
+      "get": {
+        "tags": ["Animals"],
+        "summary": "Get offspring",
+        "description": "Lists all animals for which the given animal is recorded as mother or father.",
+        "operationId": "getAnimalOffspring",
+        "responses": {
+          "200": {
+            "description": "Offspring of the animal.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/Offspring" }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Animal not found.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/MessageError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/health": {
+      "get": {
+        "tags": ["Diagnostics"],
+        "summary": "Health check",
+        "description": "Application-level liveness probe (outside the `/api/v1` prefix).",
+        "operationId": "getHealth",
+        "servers": [
+          {
+            "url": "/"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The application is healthy.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HealthStatus" }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "parameters": {
+      "AnimalTypeId": {
+        "name": "id",
+        "in": "path",
+        "required": true,
+        "description": "The animal type identifier.",
+        "schema": {
+          "type": "integer",
+          "minimum": 1
+        }
+      },
+      "AnimalId": {
+        "name": "id",
+        "in": "path",
+        "required": true,
+        "description": "The animal identifier.",
+        "schema": {
+          "type": "integer",
+          "minimum": 1
+        }
+      }
+    },
+    "schemas": {
+      "Gender": {
+        "type": "string",
+        "description": "Animal gender.",
+        "enum": ["male", "female", "unknown"]
+      },
+      "AnimalType": {
+        "type": "object",
+        "description": "An animal type (category).",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "The animal type unique identifier.",
+            "readOnly": true
+          },
+          "name": {
+            "type": "string",
+            "description": "The animal type name. Unique case-insensitively; max 50 chars.",
+            "maxLength": 50
+          },
+          "description": {
+            "type": "string",
+            "nullable": true,
+            "description": "Description of the animal type."
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Creation timestamp.",
+            "readOnly": true
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Last update timestamp.",
+            "readOnly": true
+          }
+        },
+        "required": ["id", "name"]
+      },
+      "AnimalTypeCreate": {
+        "type": "object",
+        "description": "Request body for creating an animal type.",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "The animal type name.",
+            "maxLength": 50,
+            "minLength": 1
+          },
+          "description": {
+            "type": "string",
+            "nullable": true,
+            "description": "Description of the animal type."
+          }
+        },
+        "required": ["name"]
+      },
+      "AnimalTypeUpdate": {
+        "type": "object",
+        "description": "Request body for updating an animal type. Any subset of fields; absent fields are left unchanged.",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "The animal type name.",
+            "maxLength": 50,
+            "minLength": 1
+          },
+          "description": {
+            "type": "string",
+            "nullable": true,
+            "description": "Description of the animal type. `null` clears it."
+          }
+        }
+      },
+      "AnimalTypeRef": {
+        "type": "object",
+        "description": "Nested animal type reference on an animal.",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "The animal type unique identifier."
+          },
+          "name": {
+            "type": "string",
+            "description": "The animal type name."
+          }
+        }
+      },
+      "Animal": {
+        "type": "object",
+        "description": "An individual animal with genealogical information.",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "The animal unique identifier.",
+            "readOnly": true
+          },
+          "identifier": {
+            "type": "string",
+            "description": "Unique identifier within the animal type (e.g., tag number).",
+            "maxLength": 50
+          },
+          "name": {
+            "type": "string",
+            "nullable": true,
+            "description": "Name of the animal.",
+            "maxLength": 100
+          },
+          "gender": {
+            "$ref": "#/components/schemas/Gender"
+          },
+          "date_of_birth": {
+            "type": "string",
+            "format": "date",
+            "nullable": true,
+            "description": "Date of birth (YYYY-MM-DD, not in the future)."
+          },
+          "description": {
+            "type": "string",
+            "nullable": true,
+            "description": "Description of the animal."
+          },
+          "notes": {
+            "type": "string",
+            "nullable": true,
+            "description": "Additional notes."
+          },
+          "is_active": {
+            "type": "boolean",
+            "description": "Whether the animal is active.",
+            "default": true
+          },
+          "type_id": {
+            "type": "integer",
+            "description": "Animal type ID."
+          },
+          "animal_type": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AnimalTypeRef"
+              }
+            ],
+            "nullable": true,
+            "description": "Nested animal type of the animal."
+          },
+          "mother_id": {
+            "type": "integer",
+            "nullable": true,
+            "description": "Mother animal ID (must be female and of the same type)."
+          },
+          "father_id": {
+            "type": "integer",
+            "nullable": true,
+            "description": "Father animal ID (must be male and of the same type)."
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Creation timestamp.",
+            "readOnly": true
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Last update timestamp.",
+            "readOnly": true
+          }
+        },
+        "required": ["id", "identifier", "type_id"]
+      },
+      "AnimalCreate": {
+        "type": "object",
+        "description": "Request body for creating an animal.",
+        "properties": {
+          "identifier": {
+            "type": "string",
+            "description": "Unique identifier within the animal type.",
+            "maxLength": 50,
+            "minLength": 1
+          },
+          "name": {
+            "type": "string",
+            "nullable": true,
+            "description": "Name of the animal.",
+            "maxLength": 100
+          },
+          "gender": {
+            "$ref": "#/components/schemas/Gender"
+          },
+          "date_of_birth": {
+            "type": "string",
+            "format": "date",
+            "nullable": true,
+            "description": "Date of birth (YYYY-MM-DD, not in the future)."
+          },
+          "description": {
+            "type": "string",
+            "nullable": true,
+            "description": "Description of the animal."
+          },
+          "notes": {
+            "type": "string",
+            "nullable": true,
+            "description": "Additional notes."
+          },
+          "is_active": {
+            "type": "boolean",
+            "description": "Whether the animal is active.",
+            "default": true
+          },
+          "type_id": {
+            "type": "integer",
+            "description": "Animal type ID. Must reference an existing animal type."
+          },
+          "mother_id": {
+            "type": "integer",
+            "nullable": true,
+            "description": "Mother animal ID (must be female and of the same type)."
+          },
+          "father_id": {
+            "type": "integer",
+            "nullable": true,
+            "description": "Father animal ID (must be male and of the same type)."
+          }
+        },
+        "required": ["identifier", "type_id"]
+      },
+      "AnimalUpdate": {
+        "type": "object",
+        "description": "Request body for updating an animal. Any subset of fields; absent fields are left unchanged. `null` on `mother_id`/`father_id` clears the parent.",
+        "properties": {
+          "identifier": {
+            "type": "string",
+            "description": "Unique identifier within the animal type.",
+            "maxLength": 50,
+            "minLength": 1
+          },
+          "name": {
+            "type": "string",
+            "nullable": true,
+            "description": "Name of the animal.",
+            "maxLength": 100
+          },
+          "gender": {
+            "$ref": "#/components/schemas/Gender"
+          },
+          "date_of_birth": {
+            "type": "string",
+            "format": "date",
+            "nullable": true,
+            "description": "Date of birth (YYYY-MM-DD, not in the future)."
+          },
+          "description": {
+            "type": "string",
+            "nullable": true,
+            "description": "Description of the animal."
+          },
+          "notes": {
+            "type": "string",
+            "nullable": true,
+            "description": "Additional notes."
+          },
+          "is_active": {
+            "type": "boolean",
+            "description": "Whether the animal is active."
+          },
+          "type_id": {
+            "type": "integer",
+            "description": "Animal type ID. Cannot be changed when the animal has recorded parents or offspring."
+          },
+          "mother_id": {
+            "type": "integer",
+            "nullable": true,
+            "description": "Mother animal ID. `null` clears the mother."
+          },
+          "father_id": {
+            "type": "integer",
+            "nullable": true,
+            "description": "Father animal ID. `null` clears the father."
+          }
+        }
+      },
+      "PedigreeNode": {
+        "type": "object",
+        "description": "Recursive pedigree tree node.",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "The animal unique identifier."
+          },
+          "identifier": {
+            "type": "string",
+            "description": "Unique identifier within the animal type."
+          },
+          "name": {
+            "type": "string",
+            "nullable": true,
+            "description": "Name of the animal."
+          },
+          "gender": {
+            "$ref": "#/components/schemas/Gender"
+          },
+          "date_of_birth": {
+            "type": "string",
+            "format": "date",
+            "nullable": true,
+            "description": "Date of birth (YYYY-MM-DD)."
+          },
+          "animal_type": {
+            "type": "string",
+            "nullable": true,
+            "description": "Name of the animal's type."
+          },
+          "mother": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PedigreeNode"
+              }
+            ],
+            "nullable": true,
+            "description": "Mother's node; `null` when unknown or past the depth limit."
+          },
+          "father": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PedigreeNode"
+              }
+            ],
+            "nullable": true,
+            "description": "Father's node; `null` when unknown or past the depth limit."
+          }
+        }
+      },
+      "PotentialParent": {
+        "type": "object",
+        "description": "Item of the potential-parents list, ordered by `identifier`.",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "The animal unique identifier."
+          },
+          "identifier": {
+            "type": "string",
+            "description": "Unique identifier within the animal type."
+          },
+          "name": {
+            "type": "string",
+            "nullable": true,
+            "description": "Name of the animal."
+          },
+          "gender": {
+            "$ref": "#/components/schemas/Gender"
+          },
+          "type_id": {
+            "type": "integer",
+            "description": "Animal type ID."
+          }
+        }
+      },
+      "Offspring": {
+        "type": "object",
+        "description": "Item of the offspring list.",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "The animal unique identifier."
+          },
+          "identifier": {
+            "type": "string",
+            "description": "Unique identifier within the animal type."
+          },
+          "name": {
+            "type": "string",
+            "nullable": true,
+            "description": "Name of the animal."
+          },
+          "gender": {
+            "$ref": "#/components/schemas/Gender"
+          },
+          "date_of_birth": {
+            "type": "string",
+            "format": "date",
+            "nullable": true,
+            "description": "Date of birth (YYYY-MM-DD)."
+          },
+          "relationship": {
+            "type": "string",
+            "description": "The queried animal's relationship to this child.",
+            "enum": ["mother", "father"]
+          }
+        }
+      },
+      "ValidationError": {
+        "type": "object",
+        "description": "Request-validation failure (HTTP 400).",
+        "properties": {
+          "message": {
+            "type": "string",
+            "description": "Summary of the validation failure."
+          },
+          "errors": {
+            "type": "object",
+            "description": "Mapping of field name to field-specific error message.",
+            "additionalProperties": {
+              "type": "string"
+            }
+          }
+        },
+        "required": ["message", "errors"]
+      },
+      "MessageError": {
+        "type": "object",
+        "description": "Business-rule rejection, 404, 409, or 500 response.",
+        "properties": {
+          "message": {
+            "type": "string",
+            "description": "Human-readable error message."
+          }
+        },
+        "required": ["message"]
+      },
+      "HealthStatus": {
+        "type": "object",
+        "description": "Health check response.",
+        "properties": {
+          "status": {
+            "type": "string",
+            "description": "Always `healthy`.",
+            "enum": ["healthy"]
+          }
+        },
+        "required": ["status"]
+      }
+    }
+  }
+}

@@ -64,13 +64,15 @@ var PedigreeTree = (function() {
      * Load and display pedigree data for an animal
      * @param {number} animalId - Animal ID to load pedigree for
      * @param {number} generations - Number of generations to include
+     * @param {Object} options - Options (throwOnError: rethrow instead of toasting)
      */
-    publicAPI.loadPedigree = async function(animalId, generations) {
+    publicAPI.loadPedigree = async function(animalId, generations, options = {}) {
         // Default to configured generations if not specified
         if (typeof generations === 'undefined' && typeof CONFIG !== 'undefined') {
             generations = CONFIG.DEFAULT_GENERATIONS || 3;
         }
-        
+        const { throwOnError = false } = options;
+
         try {
             if (typeof Utils !== 'undefined') {
                 Utils.showLoading();
@@ -81,7 +83,7 @@ var PedigreeTree = (function() {
             pedigreeData = response.data;
             
             // Update animal name in the title
-            const animalName = pedigreeData.name || 'Unknown';
+            const animalName = pedigreeData.name || pedigreeData.identifier || 'Unknown';
             const titleElement = document.querySelector('#pedigree-title');
             if (titleElement) {
                 titleElement.textContent = `Pedigree: ${animalName}`;
@@ -117,9 +119,14 @@ var PedigreeTree = (function() {
         } catch (error) {
             if (typeof Utils !== 'undefined') {
                 Utils.hideLoading();
-                Utils.showToast(`Error loading pedigree: ${error.message}`, 'error');
+                if (!throwOnError) {
+                    Utils.showToast(`Error loading pedigree: ${error.message}`, 'error');
+                }
             }
             console.error('Failed to load pedigree:', error);
+            if (throwOnError) {
+                throw error;
+            }
         }
     };
     

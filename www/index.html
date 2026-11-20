@@ -6,11 +6,7 @@
     <title>Pedigree Tracker</title>
     <link rel="stylesheet" href="css/normalize.css">
     <link rel="stylesheet" href="css/styles.css">
-    
-    <!-- Treant.js Libraries -->
-    <script src="libs/treant-js/jquery.min.js"></script>
-    <script src="libs/treant-js/raphael.js"></script>
-    <script src="libs/treant-js/treant.js"></script>
+
     <link rel="stylesheet" href="libs/treant-js/Treant.css">
     
     <!-- Custom styles -->
@@ -26,9 +22,12 @@
     <div class="app-container">
         <!-- Top Navigation Bar with Animal Type Tabs -->
         <header class="app-header">
-            <nav class="animal-tabs">
+            <nav class="animal-tabs" role="tablist" aria-label="Animal categories">
                 <!-- Animal type tabs will be dynamically loaded from the database -->
-                <button class="tab-btn tab-add" title="Add Animal Type">+</button>
+                <button class="tab-btn tab-edit" id="edit-type-btn" title="Edit category"
+                        aria-label="Edit current category" style="display: none;">&#9998;</button>
+                <button class="tab-btn tab-add" title="Add Animal Type"
+                        aria-label="Add animal category">+</button>
             </nav>
         </header>
 
@@ -52,6 +51,23 @@
 
             <!-- Main Display Area -->
             <section class="main-display">
+                <!-- Welcome view (shown when no animal types exist) -->
+                <div id="welcome-view" class="view">
+                    <div class="empty-state">
+                        <h2>Welcome to Pedigree Tracker</h2>
+                        <p>Get started by creating your first animal type using the + button in the top navigation.</p>
+                    </div>
+                </div>
+
+                <!-- Connection error view -->
+                <div id="error-view" class="view">
+                    <div class="empty-state error-state">
+                        <h2>Connection Error</h2>
+                        <p>Unable to connect to the backend API. Please make sure the backend server is running.</p>
+                        <button id="retry-connection" class="primary-btn">Retry Connection</button>
+                    </div>
+                </div>
+
                 <!-- Pedigree View (Default) -->
                 <div id="pedigree-view" class="view active">
                     <div class="view-header">
@@ -108,6 +124,7 @@
                                     <select id="animal-gender">
                                         <option value="female">♀ Female</option>
                                         <option value="male">♂ Male</option>
+                                        <option value="unknown">? Unknown</option>
                                     </select>
                                 </div>
                             </div>
@@ -199,6 +216,10 @@
                                             <input type="radio" name="gender" value="male">
                                             <span>♂ Male</span>
                                         </label>
+                                        <label>
+                                            <input type="radio" name="gender" value="unknown">
+                                            <span>? Unknown</span>
+                                        </label>
                                     </div>
                                 </div>
                             </div>
@@ -248,10 +269,10 @@
 
     <!-- Modal for adding new animal type -->
     <div id="add-type-modal" class="modal hidden">
-        <div class="modal-content">
+        <div class="modal-content" role="dialog" aria-modal="true" aria-labelledby="add-type-title">
             <div class="modal-header">
-                <h2>Add New Animal Type</h2>
-                <button class="close-modal">&times;</button>
+                <h2 id="add-type-title">Add New Animal Type</h2>
+                <button class="close-modal" aria-label="Close">&times;</button>
             </div>
             <div class="modal-body">
                 <div class="form-group">
@@ -270,12 +291,37 @@
         </div>
     </div>
 
+    <!-- Modal for editing an animal type -->
+    <div id="edit-type-modal" class="modal hidden">
+        <div class="modal-content" role="dialog" aria-modal="true" aria-labelledby="edit-type-title">
+            <div class="modal-header">
+                <h2 id="edit-type-title">Edit Category</h2>
+                <button class="close-modal" aria-label="Close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="edit-type-name">Name:</label>
+                    <input type="text" id="edit-type-name" placeholder="Enter animal type name" required>
+                </div>
+                <div class="form-group">
+                    <label for="edit-type-description">Description:</label>
+                    <textarea id="edit-type-description" rows="3" placeholder="Enter description"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer edit-type-footer">
+                <button id="delete-type-btn" class="danger-btn">Delete Category</button>
+                <button id="save-edit-type-btn" class="primary-btn">Save</button>
+                <button class="cancel-btn secondary-btn">Cancel</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Modal for export options -->
     <div id="export-modal" class="modal hidden">
-        <div class="modal-content">
+        <div class="modal-content" role="dialog" aria-modal="true" aria-labelledby="export-title">
             <div class="modal-header">
-                <h2>Export Options</h2>
-                <button class="close-modal">&times;</button>
+                <h2 id="export-title">Export Options</h2>
+                <button class="close-modal" aria-label="Close">&times;</button>
             </div>
             <div class="modal-body">
                 <div class="export-options">
@@ -293,7 +339,7 @@
     </div>
 
     <!-- Toast notifications -->
-    <div id="toast-container"></div>
+    <div id="toast-container" role="status" aria-live="polite"></div>
 
     <!-- Modal Backdrop -->
     <div id="modal-backdrop" class="hidden"></div>
@@ -308,12 +354,12 @@
     <script src="libs/html2pdf.bundle.min.js"></script>
     
     <!-- Application scripts -->
-    <script src="js/config.js?v=20250522"></script>
-    <script src="js/api.js?v=20250522"></script>
-    <script src="js/utils.js?v=20250522"></script>
-    <script src="js/pedigree-treant.js?v=20250528"></script>
-    <script src="js/pedigree-tree.js?v=20250528"></script>
-    <script src="js/export.js?v=20250522"></script>
-    <script src="js/app.js?v=20250522"></script>
+    <script src="js/config.js?v=20261119c"></script>
+    <script src="js/api.js?v=20261119c"></script>
+    <script src="js/utils.js?v=20261119c"></script>
+    <script src="js/pedigree-treant.js?v=20261119c"></script>
+    <script src="js/pedigree-tree.js?v=20261119c"></script>
+    <script src="js/export.js?v=20261119c"></script>
+    <script src="js/app.js?v=20261119c"></script>
 </body>
 </html>

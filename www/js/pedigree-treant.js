@@ -37,11 +37,11 @@ class PedigreeTreeant {
                 this.drawTree();
             }
         });
-        
-        // Initialize tree control buttons
-        this.initTreeControls();
+
+        // NOTE: zoom/reset buttons are bound once by PedigreeTree.init()
+        // (the adapter) - binding them here as well would double-step zoom.
     }
-    
+
     /**
      * Initialize tree control buttons (zoom, reset, etc.)
      */
@@ -253,21 +253,28 @@ class PedigreeTreeant {
      */
     generateNodeHTML(animal) {
         let html = '';
-        
-        // Format birth date
-        const birthYear = animal.date_of_birth ? new Date(animal.date_of_birth).getFullYear() : '';
-        
+
+        // Format birth date - parse the ISO string directly so the calendar
+        // year is independent of the browser's timezone.
+        const birthYear = (typeof Utils !== 'undefined')
+            ? Utils.birthYear(animal.date_of_birth)
+            : '';
+        const esc = (v) => (typeof Utils !== 'undefined')
+            ? Utils.escapeHTML(v) : String(v);
+
         // Gender icon
-        const genderSymbol = animal.gender === 'female' ? '♀' : '♂';
-        
-        // Add name with gender icon
+        const genderSymbol = animal.gender === 'female' ? '♀'
+            : animal.gender === 'male' ? '♂' : '?';
+
+        // Add name with gender icon (name escaped - stored content)
+        const displayName = animal.name || animal.identifier || '';
         html += '<div class="node-name">';
-        html += `<div class="gender-icon ${animal.gender}">${genderSymbol}</div>`;
-        html += `${animal.name}</div>`;
-        
+        html += `<div class="gender-icon ${esc(animal.gender)}">${genderSymbol}</div>`;
+        html += `${esc(displayName)}</div>`;
+
         html += `<div class="node-details">Born: ${birthYear}</div>`;
-        html += `<div class="node-metadata">ID: ${animal.identifier || ''}</div>`;
-        
+        html += `<div class="node-metadata">ID: ${esc(animal.identifier || '')}</div>`;
+
         return html;
     }
     
@@ -308,9 +315,9 @@ class PedigreeTreeant {
             node.addEventListener('click', (e) => {
                 // Extract animal ID from the data-id attribute
                 const animalId = node.getAttribute('data-id');
-                if (animalId && typeof App !== 'undefined') {
+                if (animalId && typeof App !== 'undefined' && App.confirmDiscardChanges()) {
                     // Load animal details in the application
-                    App.loadAnimalDetails(animalId);
+                    App.loadAnimalDetails(Number(animalId));
                 }
                 // Prevent event bubbling
                 e.stopPropagation();

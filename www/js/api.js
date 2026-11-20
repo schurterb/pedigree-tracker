@@ -15,11 +15,11 @@ const API = {
      */
     request: async function(endpoint, method = 'GET', data = null, queryParams = {}) {
         try {
-            // Build URL with query parameters
+            // Build URL with query parameters.
+            // Endpoint paths are canonical: collections end with '/',
+            // item/sub-resource paths do not. The backend accepts both
+            // forms but the frontend uses the canonical spelling.
             let url = `${CONFIG.API_BASE_URL}${endpoint}`;
-            if(!url.endsWith('/')) {
-                url += '/';
-            }
             if (Object.keys(queryParams).length > 0) {
                 const params = new URLSearchParams();
                 for (const [key, value] of Object.entries(queryParams)) {
@@ -64,9 +64,20 @@ const API = {
                 let errorMessage = 'An error occurred';
                 
                 if (responseData && typeof responseData === 'object') {
-                    if (responseData.message) {
+                    // Field-keyed validation errors take precedence: they are
+                    // the actionable, user-safe messages.
+                    if (responseData.errors && typeof responseData.errors === 'object'
+                            && !Array.isArray(responseData.errors)) {
+                        const fieldErrors = Object.values(responseData.errors)
+                            .filter(v => typeof v === 'string');
+                        if (fieldErrors.length > 0) {
+                            errorMessage = fieldErrors.join(' ');
+                        }
+                    }
+                    if (errorMessage === 'An error occurred' && responseData.message) {
                         errorMessage = responseData.message;
-                    } else if (responseData.errors && responseData.errors.length > 0 && responseData.errors[0].message) {
+                    } else if (responseData.errors && Array.isArray(responseData.errors)
+                            && responseData.errors.length > 0 && responseData.errors[0].message) {
                         errorMessage = responseData.errors[0].message;
                     }
                 }
@@ -117,7 +128,7 @@ const API = {
          * @returns {Promise} - List of animal types
          */
         getAll: function(options = {}) {
-            return API.request('/animal-types', 'GET', null, options);
+            return API.request('/animal-types/', 'GET', null, options);
         },
         
         /**
@@ -135,7 +146,7 @@ const API = {
          * @returns {Promise} - Created animal type
          */
         create: function(animalType) {
-            return API.request('/animal-types', 'POST', animalType);
+            return API.request('/animal-types/', 'POST', animalType);
         },
         
         /**
@@ -166,7 +177,7 @@ const API = {
          * @returns {Promise} - List of animals
          */
         getAll: function(options = {}) {
-            return API.request('/animals', 'GET', null, options);
+            return API.request('/animals/', 'GET', null, options);
         },
         
         /**
@@ -184,7 +195,7 @@ const API = {
          * @returns {Promise} - Created animal
          */
         create: function(animal) {
-            return API.request('/animals', 'POST', animal);
+            return API.request('/animals/', 'POST', animal);
         },
         
         /**
